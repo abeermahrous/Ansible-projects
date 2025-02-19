@@ -1,0 +1,166 @@
+use at to execute command logger "Coming from At" five minutes from now.
+
+2-using at, create a new file called at_file next month.
+
+3- remove the scheduled job "Coming from at2" (step 2)
+
+4-Use cron to schedule a system job every day at 11:30 pm to create a backup of the /etc directory and store it in the /tmp directory.
+===================================================================================
+1- use at to execute command logger "Coming from At" five minutes from now.
+
+2-using at, create a new file called at_file next month.
+
+
+
+[root@ControlNode ansible-project]#
+
+        name: "Daily /etc/backup"
+
+        user: "root"
+
+        minute: 30
+
+        hour: 23
+
+        job: "/usr/bin/tar -cf /tmp/dailybackup /etc"
+
+
+ cat atschedule.yml 
+
+---
+
+- name: Play to schedule 2 jobs with at
+
+  hosts: all
+
+  tasks:
+
+    - name: using at module with loop
+
+      at:
+
+        command: "{{item['command']}}"
+
+        units: "{{item['units']}}"
+
+        count: "{{item['count']}}"
+
+        state: "{{item['state']}}"
+
+        
+
+      loop:
+
+        - command: "logger 'coming from control at'"
+
+          units: minutes
+
+          count: 5
+
+          state: present
+
+        - command: "touch at_file"
+
+          units: days
+
+          count: 30
+
+          state: present
+
+
+
+
+
+3- remove the scheduled job "Coming from at2" (step 2)
+
+
+
+
+
+        - command: "touch at_file"
+
+          units: days
+
+          count: 30
+
+          state: absent
+
+
+
+
+
+4-Use cron to schedule a system job every day at 11:30 pm to create a backup of the /etc directory and stores it in the /tmp directory.
+
+
+
+[root@ControlNode ansible-project]# cat cronschedule.yml 
+
+---
+
+- name: Play to schedule recurring task
+
+  hosts: all
+
+  tasks:
+
+    - name: Backup of /etc at 11:30 pm everyday
+
+      cron:
+[root@ControlNode ansible-project]# ansible-playbook cronschedule.yml 
+
+
+
+PLAY [Play to schedule recurring task] ************************************************
+
+
+
+TASK [Gathering Facts] ****************************************************************
+
+ok: [managednode2]
+
+ok: [managednode1]
+
+
+
+TASK [Backup of /etc at 11:30 pm everyday] ********************************************
+
+changed: [managednode2]
+
+changed: [managednode1]
+
+
+
+PLAY RECAP ****************************************************************************
+
+managednode1               : ok=2    changed=1unreachable=0    failed=0    skipped=0rescued=0    ignored=0   
+
+managednode2               : ok=2    changed=1unreachable=0    failed=0    skipped=0rescued=0    ignored=0   
+
+
+
+[root@ControlNode ansible-project]# ansible all -a 'crontab -l'
+
+managednode1 | CHANGED | rc=0 >>
+
+#Ansible: Daily /etc/backup
+
+30 23 * * * /usr/bin/tar -cf /tmp/dailybackup /etc
+
+managednode2 | CHANGED | rc=0 >>
+
+#Ansible: Daily /etc/backup
+
+30 23 * * * /usr/bin/tar -cf /tmp/dailybackup /etc
+
+
+
+
+
+
+
+
+
+
+
+
+
