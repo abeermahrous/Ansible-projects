@@ -1,0 +1,112 @@
+Automate the User creation and authentication process on your environment by developing a playbook called prepare-environment.yml which includes the following steps:
+
+Create a group called DevOps
+Create a number of users Eissa, Ahmed, and Mirna who are going to be members of the DevOps team while keeping their primary group as it is
+Create SSH key for the group of users of 2048 bits and key to be stored under .ssh/x_id_rsa where x is the name of the user
+Use the authorized_key module to setup key-based authentication for the list of users
+Fix sudo to run all commands without a password for the created list of users
+Verify your configuration by changing remote_user to any of the newly created users.
+Run your first playbook for the first time to implement the above requirements. Make sure to use the –ask-pass with root for the first time.
+Verify that remote_user is working by switching the user to the remote_user in ansible.cfg and run the ping command for one last time with the –ask-pass option, followed by running the same command without the –ask-pass option.
+========================================================================================================================
+---
+
+- name: Play to automate user creation and user authentication for ansible
+
+  hosts: localhost,managednode1,managednode2
+
+  vars:
+
+    - password: ansible
+
+    - list_of_users:
+
+        - eissa
+
+        - ahmed
+
+        - mirna
+
+        
+
+  tasks:
+
+    - name: creating devops group
+
+      group:
+
+        name: devops
+
+        state: present
+
+    - name: creating a group of users and creating keys per each
+
+      user:
+
+        name: "{{item}}"
+
+        groups: devops
+
+        append: yes
+
+        password: "{{password|password_hash('sha512')}}"
+
+        generate_ssh_key: yes
+
+        ssh_key_bits: 2048
+
+        ssh_key_file: ~/.ssh/{{item}}_id_rsa
+
+      loop: "{{list_of_users}}"
+
+    - name: set authorized keys ( like copy-ssh-id)
+
+      authorized_key:
+
+        user: "{{item}}"
+
+        state: present
+
+        key: "{{lookup('file','~/.ssh/{{item}}_id_rsa.pub')}}"
+
+      loop: "{{list_of_users}}"
+
+    - name: Configuring Sudo for each user
+
+      lineinfile:
+
+        path: /etc/sudoers.d/ansible-users
+
+        line: "{{item}} ALL=(ALL) NOPASSWD:ALL"
+
+        state: present
+
+      loop: "{{list_of_users}}"
+
+[salah@ControlNode ansible-project]$ cat ansible.cfg 
+
+[defaults]
+
+inventory= ./project-inventory
+
+remote_user= eissa
+
+ask_pass= false
+
+[privilege_escalation]
+
+become= true
+
+become_method= sudo
+
+become_user= root
+
+become_ask_pass= false
+
+
+
+ ansible-playbook prepare-environment.yml -u root --ask-pass
+
+ ansible all -m ping --ask-pass
+
+ ansible all -m ping
