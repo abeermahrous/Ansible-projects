@@ -1,0 +1,62 @@
+1- As a network administrator, you have 2 machines. kindly configure managednode1 with the following connection.
+
+Connection name: lab
+
+Interface name: ens0p9 (if not available, use the network adapter configured for the NAT Network or create a new one)
+
+IP address: 53.0.35.99
+
+Gateway address: 53.0.35.254
+
+DNS address 53.0.35.50
+
+
+
+2- configure the lab connection to start automatically.
+
+
+
+3- Modify the lab connection to include IP 192.168.1.18/24 as well.
+
+
+
+4- set hostname for managednode1 to node1.ansible.dolfined.com
+==============================================================================
+[root@ControlNode ansible-project]# cat Networking/configure-nmcli.yml 
+
+---
+
+- name: Play to setup networking on managednode1
+
+  hosts: managednode1
+
+  tasks:
+
+    - name: Using Network Manager
+
+      nmcli:
+
+        conn_name: lab
+
+        ifname: enp0s9
+
+        type: ethernet
+
+        ip4: 53.0.35.99/24,192.168.1.18/24
+
+        gw4: 53.0.35.254
+
+        dns4: 53.0.34.50
+
+        autoconnect: yes
+
+        state: present
+
+    - name: Setting hostname
+
+      hostname:
+
+        name: node1.ansible.dolfined.com
+
+     
+
